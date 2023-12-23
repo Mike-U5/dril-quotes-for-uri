@@ -20,7 +20,6 @@ public class CustomDialogStorage
 				while (scanner.hasNextLine()) {
 					final String line = scanner.nextLine();
 					if (!line.isEmpty() && !line.startsWith("#") && !line.startsWith("//")) {
-						System.out.println(line);
 						customText.add(line);
 					}
 				}
