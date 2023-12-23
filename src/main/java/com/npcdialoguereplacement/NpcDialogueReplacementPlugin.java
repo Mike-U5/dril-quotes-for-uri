@@ -1,37 +1,69 @@
 package com.npcdialoguereplacement;
 
+import com.google.inject.Provides;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.Scanner;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.events.BeforeRender;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.ComponentID;
+import net.runelite.api.widgets.InterfaceID;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
-import net.runelite.client.ui.overlay.OverlayManager;
 import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 @PluginDescriptor(
-		name = "Replace Uri dialogue with Dril tweets",
-		tags = {"dril", "twitter", "tweet", "tweets", "uri", "wint", "clues", "dialogue"}
+		name = "NPC dialog replacer",
+		tags = {"uri", "clues", "dialogue"}
 )
 public class NpcDialogueReplacementPlugin extends Plugin
 {
 	@Inject
-	private OverlayManager overlayManager;
+	private NpcDialogueReplacementConfig config;
 	@Inject
 	private Client client;
 	@Inject
 	private ClientThread clientThread;
+
+	private static final ArrayList<String> customUriQuotes = new ArrayList<String>();
 	private String activeDialog = null;
 	private boolean dialogueOpened = false;
 
+	@Override
+	protected void startUp()
+	{
+		final String uriDialogPath = config.uriDialogFilePath();
+
+		if (uriDialogPath != null && !uriDialogPath.isEmpty()) {
+			try {
+				final Scanner scanner = new Scanner(new File(uriDialogPath));
+
+				while (scanner.hasNextLine()) {
+					final String line = scanner.nextLine();
+					if (!line.isEmpty() && !line.startsWith("#") && !line.startsWith("//")) {
+						NpcDialogueReplacementPlugin.customUriQuotes.add(line);
+					}
+				}
+
+				scanner.close();
+			} catch (Exception e) {
+				System.out.println("File not found.");
+			}
+		}
+	}
+
 	@Subscribe
-	public void onBeforeRender(final BeforeRender event) {
+	public void onBeforeRender(final BeforeRender event)
+	{
 		if (this.dialogueOpened) {
 			final Widget dialog = client.getWidget(ComponentID.DIALOG_NPC_TEXT);
 
@@ -39,11 +71,14 @@ public class NpcDialogueReplacementPlugin extends Plugin
 				this.activeDialog = dialog.getText();
 				final Widget name = client.getWidget(ComponentID.DIALOG_NPC_NAME);
 
-				if (name != null && name.getText().equals("Uri") && UriQuotes.contains(this.activeDialog)) {
-					final String drilQuote = DrilQuotes.getRandomQuote();
-					dialog.setLineHeight(this.getLineHeight(drilQuote));
-					dialog.setText(drilQuote);
-					this.activeDialog = null;
+				if (name != null) {
+					// Uri
+					if ((name.getText().equals("Uri") || name.getText().equals("Captain Tock")) && !this.activeDialog.equals("I do not believe we have any business, Comrade.")) {
+						final String customText = customUriQuotes.get(new Random().nextInt(customUriQuotes.size()));
+						dialog.setLineHeight(this.getLineHeight(customText));
+						dialog.setText(customText);
+						this.activeDialog = null;
+					}
 				}
 			}
 
@@ -52,8 +87,9 @@ public class NpcDialogueReplacementPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onWidgetLoaded(final WidgetLoaded event) {
-		if (event.getGroupId() == 231) {
+	public void onWidgetLoaded(final WidgetLoaded event)
+	{
+		if (event.getGroupId() == InterfaceID.DIALOG_NPC) {
 			this.dialogueOpened = true;
 		}
 	}
@@ -66,10 +102,16 @@ public class NpcDialogueReplacementPlugin extends Plugin
 			return 28;
 		} else if (count == 2) {
 			return 20;
-		} else if (count == 4) {
-			return 14; // Cannot happen normally but Dril does not follow mortal rules
+		} else if (count >= 4) {
+			return 14;
 		}
 
 		return 16;
+	}
+
+	@Provides
+	NpcDialogueReplacementConfig provideConfig(ConfigManager configManager)
+	{
+		return configManager.getConfig(NpcDialogueReplacementConfig.class);
 	}
 }
