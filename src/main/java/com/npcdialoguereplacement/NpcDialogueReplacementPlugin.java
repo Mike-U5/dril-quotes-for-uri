@@ -1,10 +1,6 @@
 package com.npcdialoguereplacement;
 
 import com.google.inject.Provides;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Random;
-import java.util.Scanner;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
@@ -13,17 +9,17 @@ import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.widgets.ComponentID;
 import net.runelite.api.widgets.InterfaceID;
 import net.runelite.api.widgets.Widget;
-import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 @PluginDescriptor(
-		name = "NPC dialog replacer",
-		tags = {"uri", "clues", "dialogue"}
+	name = "NPC dialog replacer",
+	tags = {"uri", "clues", "npc", "dialogue", "changer"}
 )
 public class NpcDialogueReplacementPlugin extends Plugin
 {
@@ -31,58 +27,50 @@ public class NpcDialogueReplacementPlugin extends Plugin
 	private NpcDialogueReplacementConfig config;
 	@Inject
 	private Client client;
-	@Inject
-	private ClientThread clientThread;
 
-	private static final ArrayList<String> customUriQuotes = new ArrayList<String>();
-	private String activeDialog = null;
-	private boolean dialogueOpened = false;
+	private static String activeDialog = null;
+	private static boolean dialogueOpened = false;
 
 	@Override
 	protected void startUp()
 	{
-		final String uriDialogPath = config.uriDialogFilePath();
-
-		if (uriDialogPath != null && !uriDialogPath.isEmpty()) {
-			try {
-				final Scanner scanner = new Scanner(new File(uriDialogPath));
-
-				while (scanner.hasNextLine()) {
-					final String line = scanner.nextLine();
-					if (!line.isEmpty() && !line.startsWith("#") && !line.startsWith("//")) {
-						NpcDialogueReplacementPlugin.customUriQuotes.add(line);
-					}
-				}
-
-				scanner.close();
-			} catch (Exception e) {
-				System.out.println("File not found.");
-			}
-		}
+		CustomDialogStorage.load(this.config.uriDialogFilePath());
 	}
 
 	@Subscribe
 	public void onBeforeRender(final BeforeRender event)
 	{
-		if (this.dialogueOpened) {
-			final Widget dialog = client.getWidget(ComponentID.DIALOG_NPC_TEXT);
+		if (dialogueOpened) {
+			final Widget dialog = this.client.getWidget(ComponentID.DIALOG_NPC_TEXT);
 
-			if (dialog != null && !dialog.getText().equals(this.activeDialog)) {
-				this.activeDialog = dialog.getText();
-				final Widget name = client.getWidget(ComponentID.DIALOG_NPC_NAME);
+			if (dialog != null && !dialog.getText().equals(activeDialog)) {
+				activeDialog = dialog.getText();
+				final Widget name = this.client.getWidget(ComponentID.DIALOG_NPC_NAME);
 
 				if (name != null) {
 					// Uri - Clue Steps
-					if (name.getText().equals("Uri") && !this.activeDialog.equals("I do not believe we have any business, Comrade.")) {
-						final String customText = customUriQuotes.get(new Random().nextInt(customUriQuotes.size()));
-						dialog.setLineHeight(this.getLineHeight(customText));
+					if (name.getText().equals("Uri") && !activeDialog.equals("I do not believe we have any business, Comrade.") && CustomDialogStorage.hasText()) {
+						final String customText = CustomDialogStorage.getRandom();
+						dialog.setLineHeight(getLineHeight(customText));
 						dialog.setText(customText);
-						this.activeDialog = null;
+						activeDialog = null;
 					}
 				}
 			}
 
-			this.dialogueOpened = false;
+			dialogueOpened = false;
+		}
+	}
+
+	@Subscribe
+	public void onConfigChanged(final ConfigChanged event)
+	{
+		if (event.getGroup().equals("npcdialoguereplacement")) {
+			if (event.getKey().equals("uriDialogFilePath")) {
+				CustomDialogStorage.load(event.getNewValue());
+				dialogueOpened = false;
+				activeDialog = null;
+			}
 		}
 	}
 
@@ -90,7 +78,7 @@ public class NpcDialogueReplacementPlugin extends Plugin
 	public void onWidgetLoaded(final WidgetLoaded event)
 	{
 		if (event.getGroupId() == InterfaceID.DIALOG_NPC) {
-			this.dialogueOpened = true;
+			dialogueOpened = true;
 		}
 	}
 
