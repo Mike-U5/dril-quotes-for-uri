@@ -39,7 +39,7 @@ public class NpcDialogueReplacementPlugin extends Plugin
 				this.activeDialog = dialog.getText();
 				final Widget name = client.getWidget(ComponentID.DIALOG_NPC_NAME);
 
-				if (name != null && (name.getText().equals("Uri") || name.getText().equals("Captain Tock")) && UriQuotes.contains(this.activeDialog)) {
+				if (name != null && name.getText().equals("Uri") && UriQuotes.contains(this.activeDialog)) {
 					final String drilQuote = DrilQuotes.getRandomQuote();
 					dialog.setLineHeight(this.getLineHeight(drilQuote));
 					dialog.setText(drilQuote);

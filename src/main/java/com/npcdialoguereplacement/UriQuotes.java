@@ -5,7 +5,6 @@ import java.util.List;
 
 public class UriQuotes {
 	private static final List<String> uriQuotes = Arrays.asList(
-		"Arrr, 'tis the young lad who helped save my crew from<br>that scoundrel, Ithoi! How be ye this fine day?",
 		"A great captain is always ready to change course.",
 		"Actions have consequences.",
 		"Can I have your teabag?",
