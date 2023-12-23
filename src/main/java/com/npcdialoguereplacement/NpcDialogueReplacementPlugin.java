@@ -17,7 +17,6 @@ import org.apache.commons.lang3.StringUtils;
 @Slf4j
 @PluginDescriptor(
 		name = "Uri Dialogue to Dril tweets",
-		description = "Changes Uri's random quotes to Dril tweets. Plugin by Mike-U5, original idea by /u/bl__________",
 		tags = {"dril", "twitter", "tweet", "tweets", "uri", "wint", "clues", "x", "dialogue"}
 )
 public class NpcDialogueReplacementPlugin extends Plugin
@@ -38,14 +37,17 @@ public class NpcDialogueReplacementPlugin extends Plugin
 
 			if (dialog != null && !dialog.getText().equals(this.activeDialog)) {
 				this.activeDialog = dialog.getText();
-
 				final Widget name = client.getWidget(ComponentID.DIALOG_NPC_NAME);
+
 				if (name != null && (name.getText().equals("Uri") || name.getText().equals("Captain Tock")) && UriQuotes.contains(this.activeDialog)) {
-					dialog.setLineHeight(this.getLineHeight(dialog.getText()));
-					dialog.setText(DrilQuotes.getRandomQuote());
+					final String drilQuote = DrilQuotes.getRandomQuote();
+					dialog.setLineHeight(this.getLineHeight(drilQuote));
+					dialog.setText(drilQuote);
 					this.activeDialog = null;
 				}
 			}
+
+			this.dialogueOpened = false;
 		}
 	}
 
@@ -58,13 +60,14 @@ public class NpcDialogueReplacementPlugin extends Plugin
 
 	private int getLineHeight(final String text)
 	{
-		final int count = StringUtils.countMatches("<br>", text);
+		final int count = StringUtils.countMatches(text, "<br>");
 
-		System.out.println("count " + count);
-		if (count == 2) {
+		if (count == 1) {
 			return 28;
-		} else if (count == 3) {
+		} else if (count == 2) {
 			return 20;
+		} else if (count == 4) {
+			return 14; // Cannot happen normally but Dril does not follow mortal rules
 		}
 
 		return 16;
