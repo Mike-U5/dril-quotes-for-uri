@@ -16,8 +16,8 @@ import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 @PluginDescriptor(
-		name = "Uri Dialogue to Dril tweets",
-		tags = {"dril", "twitter", "tweet", "tweets", "uri", "wint", "clues", "x", "dialogue"}
+		name = "Replace Uri dialogue with Dril tweets",
+		tags = {"dril", "twitter", "tweet", "tweets", "uri", "wint", "clues", "dialogue"}
 )
 public class NpcDialogueReplacementPlugin extends Plugin
 {
