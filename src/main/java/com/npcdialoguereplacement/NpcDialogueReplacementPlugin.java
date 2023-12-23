@@ -72,8 +72,8 @@ public class NpcDialogueReplacementPlugin extends Plugin
 				final Widget name = client.getWidget(ComponentID.DIALOG_NPC_NAME);
 
 				if (name != null) {
-					// Uri
-					if ((name.getText().equals("Uri") || name.getText().equals("Captain Tock")) && !this.activeDialog.equals("I do not believe we have any business, Comrade.")) {
+					// Uri - Clue Steps
+					if (name.getText().equals("Uri") && !this.activeDialog.equals("I do not believe we have any business, Comrade.")) {
 						final String customText = customUriQuotes.get(new Random().nextInt(customUriQuotes.size()));
 						dialog.setLineHeight(this.getLineHeight(customText));
 						dialog.setText(customText);
