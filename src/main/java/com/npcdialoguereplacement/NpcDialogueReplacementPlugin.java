@@ -49,7 +49,7 @@ public class NpcDialogueReplacementPlugin extends Plugin
 
 				if (name != null) {
 					// Uri - Clue Steps
-					if (name.getText().equals("Uri") && !activeDialog.equals("I do not believe we have any business, Comrade.") && CustomDialogStorage.hasText()) {
+					if (name.getText().equals("Uri") &&  !activeDialog.equalsIgnoreCase("I do not believe we have any business, Comrade.") && CustomDialogStorage.hasText()) {
 						final String customText = CustomDialogStorage.getRandom();
 						dialog.setLineHeight(getLineHeight(customText));
 						dialog.setText(customText);
